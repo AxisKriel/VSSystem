@@ -156,6 +156,19 @@ namespace PvPCommands
                 State.Remove(state);
             }
         }
+        public string StateName(int state)
+        {
+            if (state == 1)
+                return "Boost";
+            else if (state == 2)
+                return "Shield";
+            else if (state == 3)
+                return "Barrier";
+            else if (state == 4)
+                return "Locus";
+            else
+                return "None";
+        }
     }
 
     public class VSCommand
@@ -187,11 +200,11 @@ namespace PvPCommands
         /// <summary>
         /// Gets or sets an additional effects to the command.
         /// </summary>
-        public Effect Effect { get; set; }
+        public List<Effect> Effect { get; set; }
         /// <summary>
-        /// Gets or Sets whenever the command can be used on its user.
+        /// Gets or Sets whenever the command can be used on its user. Default 0, 1 is self-use, 2 is cannot be used on self.
         /// </summary>
-        public bool UseSelf { get; set; }
+        public int UseSelf { get; set; }
         /// <summary>
         /// Gets or sets the command's cooldown. Will have no effect if config.Cooldowns is set to false.
         /// </summary>
@@ -242,7 +255,7 @@ namespace PvPCommands
             this.Offensive = true;
             this.Description = new List<Message> { new Message(string.Format("Usage: /{0} <player>", Alias), Color.Yellow) };
             this.Effect = null;
-            this.UseSelf = true;
+            this.UseSelf = 0;
             this.Cooldown = 0;
             this.Counter = 0;
             this.Timer = new Timer(1);
@@ -361,59 +374,83 @@ namespace PvPCommands
         public string Type { get; set; }
         public int Parameter { get; set; }
         public int Parameter2 { get; set; }
+        public int Who { get; set; }
 
-        public Effect(string type, int parameter, int parameter2 = 0)
+        public Effect(string type, int parameter, int parameter2 = 0, int Who = 1)
         {
             this.Type = type;
             this.Parameter = parameter;
             this.Parameter2 = parameter2;
+            this.Who = Who;
         }
 
-        public static void Event(VSPlayer User, TSPlayer Target, string type, int Parameter, int Parameter2 = 0)
+        public static void Event(VSPlayer User, TSPlayer Target, string type, int Parameter, int Parameter2 = 0, int Who = 1)
         {
             if (type.ToLower() == "chill")
             {
-                Target.SetBuff(46, Parameter * 60, true);
+                if (Who == 0)
+                    User.TSPlayer.SetBuff(46, Parameter * 60, true);
+                else
+                    Target.SetBuff(46, Parameter * 60, true);
             }
             else if (type.ToLower() == "healself")
             {
-                User.TSPlayer.Heal(Parameter);
+                if (Who == 0)
+                    User.TSPlayer.Heal(Parameter);
+                else
+                    Target.Heal(Parameter);
             }
             else if (type.ToLower() == "burn")
             {
-                Target.SetBuff(24, Parameter * 60, false);
+                if (Who == 0)
+                    User.TSPlayer.SetBuff(24, Parameter * 60, false);
+                else
+                    Target.SetBuff(24, Parameter * 60, false);
             }
             else if (type.ToLower() == "silence")
             {
-                Target.SetBuff(35, Parameter * 60, true);
+                if (Who == 0)
+                    User.TSPlayer.SetBuff(35, Parameter * 60, true);
+                else    
+                    Target.SetBuff(35, Parameter * 60, true);
             }
             else if (type.ToLower() == "dodge")
             {
-                Target.SetBuff(59, Parameter * 60, false);
-            }
-            else if (type.ToLower() == "locus")
-            {
-                User.TSPlayer.SetBuff(47, 600, true);
-                User.TSPlayer.SetBuff(59, 3600, false);
-                User.TSPlayer.SetBuff(5, 600, false);
+                if (Who == 0)
+                    User.TSPlayer.SetBuff(59, Parameter * 60, false);
+                else
+                    Target.SetBuff(59, Parameter * 60, false);
             }
             else if (type.ToLower() == "freeze")
             {
-                Target.SetBuff(47, Parameter * 60, false);
+                if (Who == 0)
+                {
+                    if (VSSystem.ItemCheck(TShock.Utils.GetItemByName("Hand Warmer")[0].netID, User.TSPlayer))
+                    {
+                        User.TSPlayer.DamagePlayer(10000);
+                        User.TSPlayer.TPlayer.KillMe(10000, 0, true, " was tickled to death for having Hand Warmer.");
+                    }
+                    else
+                        User.TSPlayer.SetBuff(47, Parameter * 60, false);
+                }
+                else
+                {
+                    if (VSSystem.ItemCheck(TShock.Utils.GetItemByName("Hand Warmer")[0].netID, Target))
+                    {
+                        Target.DamagePlayer(10000);
+                        Target.TPlayer.KillMe(10000, 0, true, " was tickled to death for having Hand Warmer.");
+                    }
+                    else
+                        Target.SetBuff(47, Parameter * 60, false);
+                }
             }
-            else if (type.ToLower() == "userstate")
+            else if (type.ToLower() == "state")
             {
-                User.SetState(Parameter, Parameter2);
-            }
-            else if (type.ToLower() == "targetstate")
-            {
-                VSSystem.VSPlayers[Target.UserID].SetState(Parameter, Parameter2);
+                if (Who == 0)
+                    User.SetState(Parameter, Parameter2);
+                else
+                    VSSystem.VSPlayers[Target.UserID].SetState(Parameter, Parameter2);
             }
         }
-    }
-    public class State
-    {
-        public List<int> Type { get; set; }
-        public List<int> Count { get; set; }
     }
 }

@@ -36,7 +36,8 @@ namespace PvPCommands
                     db = new SqliteConnection(string.Format("uri=file://{0},Version=3", sql));
                     break;
             }
-            SqlTableCreator sqlcreator = new SqlTableCreator(db, db.GetSqlType() == SqlType.Sqlite ? (IQueryBuilder)new SqliteQueryCreator() : new MysqlQueryCreator());
+            SqlTableCreator sqlcreator = new SqlTableCreator(db, db.GetSqlType() == SqlType.Sqlite ?
+                (IQueryBuilder)new SqliteQueryCreator() : new MysqlQueryCreator());
             sqlcreator.EnsureExists(new SqlTable("VSPlayers",
                 new SqlColumn("UserID", MySqlDbType.Int32),
                 new SqlColumn("Name", MySqlDbType.Text),
