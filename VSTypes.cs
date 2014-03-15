@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Timers;
 using TShockAPI;
-using System.Reflection;
+using Newtonsoft.Json;
 
 namespace PvPCommands
 {
@@ -31,9 +31,10 @@ namespace PvPCommands
         /// </summary>
         public Dictionary<string, int> Cooldowns { get; set; }
         /// <summary>
-        /// Gets of sets timers related to the user's state.
+        /// Gets of sets timers related to the user's state. Key is Type, value is Count.
         /// </summary>
-        public List<int> State { get; set; }
+        //public List<int> State { get; set; }
+        public Dictionary<int, int> State { get; set; }
 
         public VSPlayer(int index)
         {
@@ -42,7 +43,8 @@ namespace PvPCommands
             this.UserID = TShock.Players[index].UserID;
             this.VSCommands = new List<VSCommand>();
             this.Cooldowns = new Dictionary<string, int>();
-            this.State = new List<int>();
+            //this.State = new List<int>();
+            this.State = new Dictionary<int, int>();
         }
         public VSPlayer(string name)
         {
@@ -51,7 +53,8 @@ namespace PvPCommands
             this.UserID = TShock.Utils.FindPlayer(name)[0].UserID;
             this.VSCommands = new List<VSCommand>();
             this.Cooldowns = new Dictionary<string, int>();
-            this.State = new List<int>();
+            //this.State = new List<int>();
+            this.State = new Dictionary<int, int>();
         }
 
         public void DamagePlayer(double damage)
@@ -75,18 +78,18 @@ namespace PvPCommands
             {
                 if (cmd.Offensive)
                 {
-                    if (State.Contains (3))
+                    if (State.Keys.Contains(3))
                     {
                         Message msg = new Message("Barrier has been disposed!", false, "", false, "", Color.Indigo);
                         RemoveState(3);
                         TSPlayer.SendMessage(msg.Text, msg.Color);
                         return;
                     }
-                    else if (State.Contains(2))
+                    else if (State.Keys.Contains(2))
                     {
                         damage *= 0.8;
                     }
-                    else if (State.Contains(4))
+                    else if (State.Keys.Contains(4))
                     {
                         damage *= 0.5;
                     }
@@ -104,27 +107,27 @@ namespace PvPCommands
             {
                 if (cmd.Offensive)
                 {
-                    if (State.Contains(3))
+                    if (State.Keys.Contains(3))
                     {
                         Message msg = new Message("Barrier has been disposed!", false, "", false, "", Color.Indigo);
                         RemoveState(3);
                         TSPlayer.SendInfoMessage(msg.Text, msg.Color);
                         return;
                     }
-                    if (State.Contains(2))
+                    if (State.Keys.Contains(2))
                     {
                         damage *= 0.8;
                     }
-                    if (State.Contains(4))
+                    if (State.Keys.Contains(4))
                     {
                         damage *= 0.5;
                     }
                 }
-                if (user.State.Contains(1))
+                if (user.State.Keys.Contains(1))
                 {
                     damage *= 1.2;
                 }
-                if (user.State.Contains(4))
+                if (user.State.Keys.Contains(4))
                 {
                     damage *= 1.5;
                 }
@@ -132,20 +135,23 @@ namespace PvPCommands
             }
         }
 
-        public void SetState(int state = 0)
+        public void SetState(int state = 0, int count = 0)
         {
             if (state == 0)
             {
-                State.RemoveRange(0, State.Count);
+                for (int i = 0; i < State.Keys.Count; i++)
+                {
+                    State.Remove(i);
+                }
             }
             else
             {
-                State.Add(state);
+                State.Add(state, count);
             }
         }
         public void RemoveState(int state)
         {
-            if (State.Contains(state))
+            if (State.Keys.Contains(state))
             {
                 State.Remove(state);
             }
@@ -333,6 +339,7 @@ namespace PvPCommands
             this.Text = text;
             this.Color = color;
         }
+        [JsonConstructor]
         public Message(string initmsg, bool useplr1, string midmsg, bool useplr2, string endmsg, Color color)
         {
             this.InitMsg = initmsg;
@@ -353,14 +360,16 @@ namespace PvPCommands
     {
         public string Type { get; set; }
         public int Parameter { get; set; }
+        public int Parameter2 { get; set; }
 
-        public Effect(string type, int parameter)
+        public Effect(string type, int parameter, int parameter2 = 0)
         {
             this.Type = type;
             this.Parameter = parameter;
+            this.Parameter2 = parameter2;
         }
 
-        public static void Event(VSPlayer User, TSPlayer Target, string type, int Parameter)
+        public static void Event(VSPlayer User, TSPlayer Target, string type, int Parameter, int Parameter2 = 0)
         {
             if (type.ToLower() == "chill")
             {
@@ -394,50 +403,17 @@ namespace PvPCommands
             }
             else if (type.ToLower() == "userstate")
             {
-                User.SetState(Parameter);
+                User.SetState(Parameter, Parameter2);
             }
             else if (type.ToLower() == "targetstate")
             {
-                VSSystem.VSPlayers[Target.UserID].SetState(Parameter);
+                VSSystem.VSPlayers[Target.UserID].SetState(Parameter, Parameter2);
             }
         }
     }
-    //public class State
-    //{
-    //    public int[] Type { get; set; }
-    //    public Timer Boost { get; set; }
-    //    public Timer Barrier { get; set; }
-    //    public Timer Shield { get; set; }
-    //    public Timer Locus { get; set; }
-
-        
-    //    void Boost_Elapsed(object sender, ElapsedEventArgs e)
-    //    {
-    //        Message msg = new Message("Boost has expired.", false, "", false, "", Color.DimGray);
-    //        User.TSPlayer.SendMessage(msg.Text, msg.Color);
-    //        Boost.Stop();
-    //        Boost.Interval = 1;
-    //    }
-    //    void Barrier_Elapsed(object sender, ElapsedEventArgs e)
-    //    {
-    //        Message msg = new Message("Barrier has expired.", false, "", false, "", Color.DimGray);
-    //        Player.TSPlayer.SendMessage(msg.Text, msg.Color);
-    //        Barrier.Stop();
-    //        Barrier.Interval = 1;
-    //    }
-    //    void Shield_Elapsed(object sender, ElapsedEventArgs e)
-    //    {
-    //        Message msg = new Message("Virtual Shield has expired.", false, "", false, "", Color.DimGray);
-    //        Player.TSPlayer.SendMessage(msg.Text, msg.Color);
-    //        Shield.Stop();
-    //        Shield.Interval = 1;
-    //    }
-    //    void Locus_Elapsed(object sender, ElapsedEventArgs e)
-    //    {
-    //        Message msg = new Message("Locus of Power has expired.", false, "", false, "", Color.Fuchsia);
-    //        Player.TSPlayer.SendMessage(msg.Text, msg.Color);
-    //        Locus.Stop();
-    //        Locus.Interval = 1;
-    //    }
-    //}
+    public class State
+    {
+        public List<int> Type { get; set; }
+        public List<int> Count { get; set; }
+    }
 }

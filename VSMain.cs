@@ -17,7 +17,7 @@ namespace PvPCommands
         #region PluginInfo
         public VSSystem(Main game) : base(game) { }
 
-        Version version = new Version(1, 0, 0);
+        Version version = new Version(1, 0, 1);
         public override Version Version
         {
             get { return version; }
@@ -308,7 +308,7 @@ namespace PvPCommands
                 Offensive = false,
                 BypassPvp = true,
                 MsgSelf = new Message("Virtual Shield activated! Damage taken by PvP Commands will be reduced by 20%!", false, "", false, "", Color.DimGray),
-                Effect = new Effect("userstate", 2)
+                Effect = new Effect("userstate", 2, 60)
             };
             PVPCommands.Add(Shield);
             #endregion
@@ -332,6 +332,17 @@ namespace PvPCommands
                     if (cmd == VSCommandByAlias(player, "rake") && cmd.Timer.Enabled)
                     {
                         VSPlayers[cmd.Target.UserID].DamagePlayer(30, cmd, cmd.User);
+                    }
+                    foreach (int type in player.State.Keys)
+                    {
+                        if (player.State.Keys.Contains(type))
+                        {
+                            player.State[type]--;
+                            if (player.State[type] < 1)
+                            {
+                                player.State.Remove(type);
+                            }
+                        }
                     }
 
                 }
