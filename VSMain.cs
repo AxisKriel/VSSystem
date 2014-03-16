@@ -17,7 +17,7 @@ namespace PvPCommands
         #region PluginInfo
         public VSSystem(Main game) : base(game) { }
 
-        Version version = new Version(1, 2, 0);         // Versioning Format: MAJOR.MINOR.BUGFIX
+        Version version = new Version(1, 2, 1);         // Versioning Format: MAJOR.MINOR.BUGFIX
         public override Version Version                 // MAJOR is not backwards-compatible
         {                                               // MINOR is backwards-compatible, used when new content is added
             get { return version; }                     // BUGFIX is backwards-compatible, used when only bugfixes are commited
@@ -792,7 +792,7 @@ namespace PvPCommands
             VSPlayers.Add(UserID, new VSPlayer(Index));
             if (!VSDatabase.AddVSPlayer(UserID, TShock.Players[Index].Name))
             {
-                Log.ConsoleError("[PvP Commands] failed to create VSPlayer for user " + TShock.Players[Index].Name);
+                Log.ConsoleError("[VSSystem] failed to create VSPlayer for user " + TShock.Players[Index].Name);
                 return;
             }
             VSPlayers[UserID].VSCommands.AddRange(PVPCommands);
@@ -801,7 +801,7 @@ namespace PvPCommands
                 VSPlayers[UserID].Cooldowns.Add(cmd.Alias, cmd.Counter);
                 VSDatabase.AddCooldown(UserID, cmd.Alias, cmd.Counter);
             }
-            
+            Log.ConsoleInfo("[VSSystem] VSPlayer created for " + TShock.Players[Index].Name);
             return;
         }
         private static void SaveToDb(VSPlayer ply)
