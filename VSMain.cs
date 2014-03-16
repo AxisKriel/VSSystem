@@ -17,7 +17,7 @@ namespace PvPCommands
         #region PluginInfo
         public VSSystem(Main game) : base(game) { }
 
-        Version version = new Version(1, 2, 1);         // Versioning Format: MAJOR.MINOR.BUGFIX
+        Version version = new Version(1, 2, 2);         // Versioning Format: MAJOR.MINOR.BUGFIX
         public override Version Version                 // MAJOR is not backwards-compatible
         {                                               // MINOR is backwards-compatible, used when new content is added
             get { return version; }                     // BUGFIX is backwards-compatible, used when only bugfixes are commited
@@ -62,7 +62,7 @@ namespace PvPCommands
             // Adding PvP Commands
             foreach (VSCommand cmd in PVPCommands)
             {
-                Commands.ChatCommands.Add(new Command(cmd.Permission, DoCommand, cmd.Alias)
+                Commands.ChatCommands.Add(new Command("vs.commands." + cmd.Permission, DoCommand, cmd.Alias)
                 {
                     HelpText = string.Format("Usage: /{0}{1}. Type /vshelp {0} for more info", cmd.Alias, cmd.UseSelf == 1 ? "" :
                     " <player>"),
@@ -795,13 +795,13 @@ namespace PvPCommands
                 Log.ConsoleError("[VSSystem] failed to create VSPlayer for user " + TShock.Players[Index].Name);
                 return;
             }
+            Log.ConsoleInfo("[VSSystem] VSPlayer created for " + TShock.Players[Index].Name);
             VSPlayers[UserID].VSCommands.AddRange(PVPCommands);
             foreach (VSCommand cmd in VSPlayers[UserID].VSCommands)
             {
                 VSPlayers[UserID].Cooldowns.Add(cmd.Alias, cmd.Counter);
                 VSDatabase.AddCooldown(UserID, cmd.Alias, cmd.Counter);
             }
-            Log.ConsoleInfo("[VSSystem] VSPlayer created for " + TShock.Players[Index].Name);
             return;
         }
         private static void SaveToDb(VSPlayer ply)
