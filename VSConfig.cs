@@ -49,7 +49,7 @@ namespace PvPCommands
                 // Message to send when the command is executed. You can choose from MsgAll, MsgPlayer and MsgSelf.
                 // Syntax: new Message(" firstmessage ", whether to show user's name (true/false), " secondmessage ",
                 // whether to show target's name (true/false), " lastmessage ", Color.ColorName)
-                MsgAll = new Message("", true, " just smashed ", true, "!", Color.Ivory)
+                MsgAll = new Message("", true, " just smashed ", true, "!", Color.Brown)
             },
             new VSCommand("Knuckle")
             {
@@ -66,7 +66,7 @@ namespace PvPCommands
                 // This is when it gets interesting: You can add effects to commands. First arg is the type (string),
                 // second arg is the parameter (duration, delayed damage, etc). Some effects require more than one parameter.
                 // Check README.MD for a list of all available effects.
-                Effect = new List<Effect>() { new Effect("burn", 15) }
+                Effect = new List<Effect>() { new Effect("buff", 24, 15) }
             }
         };
 

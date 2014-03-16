@@ -36,6 +36,7 @@ namespace PvPCommands
         //public List<int> State { get; set; }
         public Dictionary<int, int> State { get; set; }
 
+        // Can add either by Player Index or Name. If name, make sure it matches exactly 1 player
         public VSPlayer(int index)
         {
             this.Index = index;
@@ -171,6 +172,9 @@ namespace PvPCommands
         }
     }
 
+    /// <summary>
+    /// PvP Command constructor
+    /// </summary>
     public class VSCommand
     {
         /// <summary>
@@ -246,6 +250,7 @@ namespace PvPCommands
         /// </summary>
         public virtual TSPlayer Target { get; set; }
 
+        // If name is given a value, alias and permission are automatically set. Still better to manually set those
         public VSCommand(string name = "")
         {
             this.Name = name;
@@ -337,6 +342,9 @@ namespace PvPCommands
         #endregion
     }
 
+    /// <summary>
+    /// Handles messages for correct formatting
+    /// </summary>
     public class Message
     {
         public string Text { get; set; }
@@ -362,6 +370,8 @@ namespace PvPCommands
             this.UsePlr1 = useplr1;
             this.UsePlr2 = useplr2;
         }
+        // Format is "Message" + User name (show?true/false) + "Message" + Target name (show?true/false) + "Message".
+        // If inverted is true, User and Target name are shown in the opposite order (Target first, User last)
         public Message(string msg1, TSPlayer ply1, string msg2, TSPlayer ply2, string msg3, Color color, bool inverted = false)
         {
             this.Text = string.Format("[PvP] {0}{1}{2}{3}{4}{5}{6}", inverted ? "" : msg1, inverted ? "" : (ply1 == null ? "" : ply1.Name), msg2, ply2 == null ? "" : ply2.Name, msg3, inverted ? (ply1 == null ? "" : ply1.Name) : "", inverted ? msg1 : "");
@@ -369,6 +379,9 @@ namespace PvPCommands
         }
     }
 
+    /// <summary>
+    /// Provides additional effects such as buffs and states
+    /// </summary>
     public class Effect
     {
         public string Type { get; set; }
@@ -384,8 +397,23 @@ namespace PvPCommands
             this.Who = Who;
         }
 
+        // Event for the effect. Parameter function vary based on the type. Who is 0 (User) and 1 (target)
         public static void Event(VSPlayer User, TSPlayer Target, string type, int Parameter, int Parameter2 = 0, int Who = 1)
         {
+            if (type.ToLower() == "buff")
+            {
+                try
+                {
+                    if (Who == 0)
+                        User.TSPlayer.SetBuff(Parameter, Parameter2 * 60, false);
+                    else
+                        Target.SetBuff(Parameter, Parameter2 * 60, false);
+                }
+                catch (Exception)
+                {
+                    Log.ConsoleError("[VSSystem] A command has returned an error at Effect parameter: Invalid buff ID");
+                }
+            }
             if (type.ToLower() == "chill")
             {
                 if (Who == 0)
@@ -400,28 +428,7 @@ namespace PvPCommands
                 else
                     Target.Heal(Parameter);
             }
-            else if (type.ToLower() == "burn")
-            {
-                if (Who == 0)
-                    User.TSPlayer.SetBuff(24, Parameter * 60, false);
-                else
-                    Target.SetBuff(24, Parameter * 60, false);
-            }
-            else if (type.ToLower() == "silence")
-            {
-                if (Who == 0)
-                    User.TSPlayer.SetBuff(35, Parameter * 60, true);
-                else    
-                    Target.SetBuff(35, Parameter * 60, true);
-            }
-            else if (type.ToLower() == "dodge")
-            {
-                if (Who == 0)
-                    User.TSPlayer.SetBuff(59, Parameter * 60, false);
-                else
-                    Target.SetBuff(59, Parameter * 60, false);
-            }
-            else if (type.ToLower() == "freeze")
+            else if (type.ToLower() == "tickle")
             {
                 if (Who == 0)
                 {

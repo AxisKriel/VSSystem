@@ -17,7 +17,7 @@ namespace PvPCommands
         #region PluginInfo
         public VSSystem(Main game) : base(game) { }
 
-        Version version = new Version(1, 1, 0);         // Versioning Format: MAJOR.MINOR.BUGFIX
+        Version version = new Version(1, 2, 0);         // Versioning Format: MAJOR.MINOR.BUGFIX
         public override Version Version                 // MAJOR is not backwards-compatible
         {                                               // MINOR is backwards-compatible, used when new content is added
             get { return version; }                     // BUGFIX is backwards-compatible, used when only bugfixes are commited
@@ -56,21 +56,6 @@ namespace PvPCommands
             Commands.ChatCommands.Add(new Command("vs.reload", DoVSReload, "vsreload")
             { HelpText = "Reloads VSConfig.json." });
 
-            #region oldadd
-            //Commands.ChatCommands.Add(new Command("vs.commands.strike", DoStrike, "strike") { HelpText = "Usage: /strike <player> <amount>. Type /vshelp strike for more info", AllowServer = false });
-            //Commands.ChatCommands.Add(new Command("vs.commands.heal", DoVSHeal, "vsheal") { HelpText = "Usage: /vsheal <player>. Type /vshelp vsheal for more info", AllowServer = false });
-            //Commands.ChatCommands.Add(new Command("vs.commands.chill", DoCommand, "chill") { HelpText = "Usage: /chill <player>. Type /vshelp chill for more info", AllowServer = false });
-            //Commands.ChatCommands.Add(new Command("vs.commands.stab", DoCommand, "stab") { HelpText = "Usage: /stab <player>. Type /vshelp stab for more info", AllowServer = false });
-            //Commands.ChatCommands.Add(new Command("vs.commands.dedge", DoCommand, "dedge") { HelpText = "Usage: /dedge <player>. Type /vshelp dedge for more info", AllowServer = false });
-            //Commands.ChatCommands.Add(new Command("vs.commands.tickle", DoCommand, "tickle") { HelpText = "Usage: /tickle <player>. Type /vshelp tickle for more info", AllowServer = false });
-            //Commands.ChatCommands.Add(new Command("vs.commands.fsight", DoCommand, "fsight") { HelpText = "Usage: /fsight <player>. Type /vshelp fsight for more info", AllowServer = false });
-            //Commands.ChatCommands.Add(new Command("vs.commands.doom", DoCommand, "doom") { HelpText = "Usage: /doom <player>. Type /vshelp doom for more info", AllowServer = false });
-            //Commands.ChatCommands.Add(new Command("vs.commands.wish", DoCommand, "wish") { HelpText = "Usage: /wish <player>. Type /vshelp wish for more info", AllowServer = false });
-            //Commands.ChatCommands.Add(new Command("vs.commands.hwish", DoCommand, "hwish") { HelpText = "Usage: /hwish <player>. Type /vshelp hwish for more info", AllowServer = false });
-            //Commands.ChatCommands.Add(new Command("vs.commands.drain", DoCommand, "drain") { HelpText = "Usage: /drain <player>. Type /vshelp drain for more info", AllowServer = false });
-            //Commands.ChatCommands.Add(new Command("vs.commands.rake", DoCommand, "rake") { HelpText = "Usage: /rake <player>. Type /vshelp rake for more info", AllowServer = false });
-            #endregion
-
             VSConfig.ReadVSConfig();
             VSDatabase.SetupDB();
             BuildCommands();
@@ -79,7 +64,8 @@ namespace PvPCommands
             {
                 Commands.ChatCommands.Add(new Command(cmd.Permission, DoCommand, cmd.Alias)
                 {
-                    HelpText = string.Format("Usage: /{0}{1}. Type /vshelp {0} for more info", cmd.Alias, cmd.UseSelf == 1 ? "" : " <player>"),
+                    HelpText = string.Format("Usage: /{0}{1}. Type /vshelp {0} for more info", cmd.Alias, cmd.UseSelf == 1 ? "" :
+                    " <player>"),
                     AllowServer = false
                 });
             }
@@ -102,10 +88,17 @@ namespace PvPCommands
 
         private static void OnLeave(LeaveEventArgs e)
         {
-            if (TShock.Players[e.Who] != null)
+            if (TShock.Players[e.Who].IsLoggedIn && VSPlayers[TShock.Players[e.Who].UserID] != null)
             {
-                SaveToDb(VSPlayers[TShock.Players[e.Who].UserID]);
-                VSPlayers.Remove(TShock.Players[e.Who].UserID);
+                try
+                {
+                    SaveToDb(VSPlayers[TShock.Players[e.Who].UserID]);
+                    VSPlayers.Remove(TShock.Players[e.Who].UserID);
+                }
+                catch (Exception)
+                {
+                    Log.ConsoleInfo("[VSSystem] OnLeave hook has thrown an harmless error. Please contact the plugin developer.");
+                }
             }
         }
 
@@ -121,20 +114,6 @@ namespace PvPCommands
 
         private static void BuildCommands()
         {
-            #region oldcommands
-            //VSCommand Stab = new VSCommand(1, "Stab", new[] { string.Format("Stabs target player. {0} base power.{1}", (config.Equalizer ? Equalize(200) : "200", (config.Cooldowns ? string.Format(" {0} seconds cooldown.", config.StabCooldown) : "")), "Usage: /stab <player>" }, config.StabCooldown);
-            //VSCommand DEdge = new VSCommand(2, "Double-Edged Strike", new[] { string.Format("Hits target player with a life-risking tackle. {0} base power, user takes 150 self-damage.{1}", (config.Equalizer ? Equalize(300) : "300", (config.Cooldowns ? string.Format(" {0} seconds cooldown.", config.DedgeCooldown) : "")), "Usage: /dedge <player>" }, config.DedgeCooldown);
-            //VSCommand Tickle = new VSCommand(3, "Tickle Freenzy", new[] { string.Format("Tickles target player, freezing them for 15 seconds.{0}", (config.Cooldowns ? string.Format(" {0} seconds cooldown.", config.TickleCooldown) : "")), "Usage: /tickle <player>" }, config.StabCooldown);
-            //VSCommand FSight = new VSCommand(4, "Future Sight", new[] { string.Format("Strikes target player after a 5 seconds delay. {0} base power.{1}", (config.Equalizer ? Equalize(250) : "250", (config.Cooldowns ? string.Format(" {0} seconds cooldown.", config.FsightCooldown) : "")), "Usage: /fsight <player>" }, config.FsightCooldown);
-            //VSCommand Drain = new VSCommand(5, "Drain", new[] { string.Format("Drains target player's health, healing the user for 80 health. {0} base power.{1}", (config.Equalizer ? Equalize(100) : "100", (config.Cooldowns ? string.Format(" {0} seconds cooldown.", config.DrainCooldown) : "")), "Usage: /drain <player>" }, config.DrainCooldown);
-            //VSCommand Silence = new VSCommand(6, "Silence!", new[] { string.Format("Silences target player for 8 seconds.{0}", (config.Cooldowns ? string.Format(" {0} seconds cooldown.", config.SilenceCooldown) : "")), "Usage: /silence <player>" }, config.SilenceCooldown);
-            //VSCommand Wish = new VSCommand(7, "Wish", new[] { string.Format("Wishes upon a star, healing target player or self for 200 health after 5 seconds.{0}", (config.Cooldowns ? string.Format(" {0} seconds cooldown.", config.WishCooldown) : "")), "Usage: /wish [player] (leave blank for self)" }, config.WishCooldown);
-            //VSCommand HWish = new VSCommand(8, "Healing Wish", new[] { string.Format("Sacrifices user to fully restore target ally or player after 5 seconds.{0}", (config.Cooldowns ? string.Format(" {0} seconds cooldown.", config.HwishCooldown) : "")), "Usage: /hwish <player> (can't be used on self)" }, config.HwishCooldown);
-            //VSCommand Chill = new VSCommand(9, "Chilling Glyph", new[] { string.Format("Enchanted glyph attack, slows target player for 7 seconds. {0} base power.{1}", (config.Equalizer ? Equalize(125) : "125", (config.Cooldowns ? string.Format(" {0} seconds cooldown.", config.ChillCooldown) : "")), "Usage: /chill <player>" }, config.ChillCooldown);
-            //VSCommand Flare = new VSCommand(10, "Flare Lash", new[] { string.Format("Lash that damages and burns target player for 20 seconds. {0} base power, 60 damage-over-time.{1}", (config.Equalizer ? Equalize(80) : "80", (config.Cooldowns ? string.Format(" {0} seconds cooldown.", config.FlareCooldown) : "")), "Usage: /flare <player>" }, config.FlareCooldown);
-            //VSCommand Doom = new VSCommand(11, "Doom Demise", new[] { string.Format("Dooms target player's fate, bombarding them to minimal health after 5 seconds. {0} base power.{1}", (config.Equalizer ? Equalize(400) : "400", (config.Cooldowns ? string.Format(" {0} seconds cooldown.", config.DoomCooldown) : "")), "Usage: /doom <player>" }, config.DoomCooldown);
-            //VSCommand Rake = new VSCommand(12, "Bloody Rake", new[] { string.Format("Rakes target player, hitting them 3 times. {0} + {1} + {2} base power.{3}", (config.Equalizer ? Equalize(100) : "100", (config.Equalizer ? Equalize(75) : "75", (config.Equalizer ? Equalize(50) : "50", (config.Cooldowns ? string.Format(" {0} seconds cooldown.", config.RakeCooldown) : "")), "Usage: /rake <player>" }, config.RakeCooldown);
-            #endregion
             // VS Command Setup
             // Default Commands Count: 2 (Baseline), 14 (PvP)
             #region Strike
@@ -213,7 +192,7 @@ namespace PvPCommands
                 Permission = "tickle",
                 BypassPvp = true,
                 Offensive = false,
-                Effect = new List<Effect>() { new Effect("freeze", 10) }
+                Effect = new List<Effect>() { new Effect("tickle", 10) }
             };
             Tickle.MsgAll = new Message("", false, "", true, " is under a freezing attack of tickles!", new Color(243, 112, 234));
             Tickle.Timer.Interval = 10000;
@@ -268,7 +247,7 @@ namespace PvPCommands
                     new Message("Casts an ice glyph on target player, chilling them for 7 seconds.", Color.Cyan),
                     new Message("Usage: /chill <player>", Color.Yellow)
                 },
-                Effect = new List<Effect>() { new Effect("chill", 7) },
+                Effect = new List<Effect>() { new Effect("buff", 46, 7) },
                 MsgPlayer = new Message("You have been chilled!", false, "", false, "", Color.Cyan)
             };
             PVPCommands.Add(Chill);
@@ -366,7 +345,7 @@ namespace PvPCommands
                 Offensive = false,
                 UseSelf = 1,
                 MsgSelf = new Message("Boost activated! Damage dealt to players by your PvP Commands will be increased by 20%!", false, "", false, "", Color.OrangeRed),
-                Effect = new List<Effect>() { new Effect("userstate", 1, 60) },
+                Effect = new List<Effect>() { new Effect("state", 1, 60) },
                 Cooldown = VSConfig.config.BoostCooldown
             };
             PVPCommands.Add(Boost);
@@ -385,7 +364,7 @@ namespace PvPCommands
                 Offensive = false,
                 UseSelf = 1,
                 MsgSelf = new Message("Virtual Shield activated! Damage taken by PvP Commands will be reduced by 20%!", false, "", false, "", Color.DimGray),
-                Effect = new List<Effect>() { new Effect("userstate", 2, 60) },
+                Effect = new List<Effect>() { new Effect("state", 2, 60) },
                 Cooldown = VSConfig.config.ShieldCooldown
             };
             PVPCommands.Add(Shield);
@@ -405,7 +384,7 @@ namespace PvPCommands
                 Offensive = false,
                 UseSelf = 1,
                 MsgSelf = new Message("Barrier lifted! The next PvP command used against you will be ignored!", false, "", false, "", Color.DimGray),
-                Effect = new List<Effect>() { new Effect("userstate", 3, 60) },
+                Effect = new List<Effect>() { new Effect("state", 3, 60) },
                 Cooldown = VSConfig.config.BarrierCooldown
             };
             PVPCommands.Add(Barrier);
@@ -427,7 +406,7 @@ namespace PvPCommands
                 UseSelf = 1,
                 Effect = new List<Effect>()
                     {
-                        new Effect("userstate", 4, 10),
+                        new Effect("state", 4, 10),
                         new Effect("chill", 10, Who: 0)
                     },
                 MsgAll = new Message("", true, " activated Locus of Power!", false, "", Color.Navy),
@@ -458,14 +437,11 @@ namespace PvPCommands
                     }
                     foreach (int type in player.State.Keys)
                     {
-                        if (player.State.Keys.Contains(type))
+                        player.State[type]--;
+                        if (player.State[type] < 1)
                         {
-                            player.State[type]--;
-                            if (player.State[type] < 1)
-                            {
-                                player.TSPlayer.SendWarningMessage(string.Format("[PvP] State has expired ({0})", player.StateName(type)));
-                                player.State.Remove(type);
-                            }
+                            player.TSPlayer.SendWarningMessage(string.Format("[PvP] State has expired ({0})", player.StateName(type)));
+                            player.State.Remove(type);
                         }
                     }
 
@@ -473,6 +449,7 @@ namespace PvPCommands
             }
         }
 
+        // Sends a PvP Command's information to the user
         private void DoVSHelp(CommandArgs args)
         {
             TSPlayer ply = args.Player;
@@ -515,6 +492,7 @@ namespace PvPCommands
             }
         }
 
+        // Lists every PvP Command a player can use
         private void DoVSList(CommandArgs args)
         {
             int pageNumber;
@@ -541,6 +519,7 @@ namespace PvPCommands
             }
         }
 
+        // Reloads the configuration file
         private void DoVSReload(CommandArgs args)
         {
             if (VSConfig.ReadVSConfig())
@@ -553,6 +532,58 @@ namespace PvPCommands
             }
         }
 
+        // PvP Command handler
+        private static void DoCommand(CommandArgs args)
+        {
+            VSPlayer ply = VSPlayers[args.Player.UserID];
+            VSCommand cmd = null;
+            foreach (VSCommand cmdfound in ply.VSCommands)
+            {
+                if (args.Message.StartsWith(cmdfound.Alias))
+                {
+                    cmd = cmdfound;
+                }
+            }
+            if (cmd == null)
+            {
+                ply.TSPlayer.SendErrorMessage("[PvP] Error: Invalid command entered! Type /vslist for a list of commands");
+                return;
+            }
+            string query = "";
+            if (cmd.UseSelf == 1)
+            {
+                VSExecute(ply, cmd, ply.TSPlayer);
+                return;
+            }
+            if (args.Parameters.Count < 1)
+            {
+                ply.TSPlayer.SendErrorMessage(string.Format("Invalid syntax! Proper syntax: /{0} <player>", cmd.Alias));
+                return;
+            }
+            else
+            {
+                query = string.Join(" ", args.Parameters);
+            }
+            var found = TShock.Utils.FindPlayer(query);
+            if (found.Count < 1)
+            {
+                ply.TSPlayer.SendErrorMessage("[PvP] Error: No players matched!");
+                return;
+            }
+            else if (found.Count > 1)
+            {
+                string list = string.Join(", ", found);
+                ply.TSPlayer.SendErrorMessage("[PvP] Error: More than one player matched! Matches: " + list);
+                return;
+            }
+            else
+            {
+                VSExecute(ply, cmd, found[0]);
+                return;
+            }
+        }
+
+        // PvP Command execution
         private static void VSExecute(VSPlayer user, VSCommand command, TSPlayer target)
         {
             // Sets command user and target
@@ -633,56 +664,7 @@ namespace PvPCommands
             return;
         }
 
-        private static void DoCommand(CommandArgs args)
-        {
-            VSPlayer ply = VSPlayers[args.Player.UserID];
-            VSCommand cmd = null;
-            foreach (VSCommand cmdfound in ply.VSCommands)
-            {
-                if (args.Message.StartsWith(cmdfound.Alias))
-                {
-                    cmd = cmdfound;
-                }
-            }
-            if (cmd == null)
-            {
-                ply.TSPlayer.SendErrorMessage("[PvP] Error: Invalid command entered! Type /vslist for a list of commands");
-                return;
-            }
-            string query = "";
-            if (cmd.UseSelf == 1)
-            {
-                VSExecute(ply, cmd, ply.TSPlayer);
-                return;
-            }
-            if (args.Parameters.Count < 1)
-            {
-                ply.TSPlayer.SendErrorMessage(string.Format("Invalid syntax! Proper syntax: /{0} <player>", cmd.Alias));
-                return;
-            }
-            else
-            {
-                query = string.Join(" ", args.Parameters);
-            }
-            var found = TShock.Utils.FindPlayer(query);
-            if (found.Count < 1)
-            {
-                ply.TSPlayer.SendErrorMessage("[PvP] Error: No players matched!");
-                return;
-            }
-            else if (found.Count > 1)
-            {
-                string list = string.Join(", ", found);
-                ply.TSPlayer.SendErrorMessage("[PvP] Error: More than one player matched! Matches: " + list);
-                return;
-            }
-            else
-            {
-                VSExecute(ply, cmd, found[0]);
-                return;
-            }
-        }
-
+        // /strike handler
         private void DoStrike(CommandArgs args)
         {
             VSPlayer ply = VSPlayers[args.Player.UserID];
@@ -725,6 +707,7 @@ namespace PvPCommands
             }
         }
 
+        // /vsheal handler
         private void DoVSHeal(CommandArgs args)
         {
             VSCommand cmd = PVPCommandByAlias("vsheal");
@@ -753,7 +736,7 @@ namespace PvPCommands
             }
             else
             {
-                VSExecute(VSPlayers[ply.Index], cmd, found[0]);
+                VSExecute(VSPlayers[ply.UserID], cmd, found[0]);
                 return;
             }
         }

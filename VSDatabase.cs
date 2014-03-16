@@ -41,7 +41,7 @@ namespace PvPCommands
             sqlcreator.EnsureExists(new SqlTable("VSPlayers",
                 new SqlColumn("UserID", MySqlDbType.Int32),
                 new SqlColumn("Name", MySqlDbType.Text),
-                new SqlColumn("Commands", MySqlDbType.Text)));
+                new SqlColumn("Commands", MySqlDbType.Text)));  // I'm aware this is useless at the moment
             sqlcreator.EnsureExists(new SqlTable("VSCommands",
                 new SqlColumn("UserID", MySqlDbType.Int32),
                 new SqlColumn("CmdAlias", MySqlDbType.Text),
