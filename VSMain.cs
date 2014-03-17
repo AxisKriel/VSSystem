@@ -88,7 +88,7 @@ namespace PvPCommands
 
         private static void OnLeave(LeaveEventArgs e)
         {
-            if (TShock.Players[e.Who].IsLoggedIn && VSPlayers.ContainsKey(TShock.Players[e.Who].UserID))
+            if (TShock.Players[e.Who] != null && TShock.Players[e.Who].IsLoggedIn && VSPlayers.ContainsKey(TShock.Players[e.Who].UserID))
             {
                 try
                 {
