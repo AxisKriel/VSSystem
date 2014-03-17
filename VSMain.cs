@@ -17,7 +17,7 @@ namespace PvPCommands
         #region PluginInfo
         public VSSystem(Main game) : base(game) { }
 
-        Version version = new Version(1, 2, 2);         // Versioning Format: MAJOR.MINOR.BUGFIX
+        Version version = new Version(1, 2, 3);         // Versioning Format: MAJOR.MINOR.BUGFIX
         public override Version Version                 // MAJOR is not backwards-compatible
         {                                               // MINOR is backwards-compatible, used when new content is added
             get { return version; }                     // BUGFIX is backwards-compatible, used when only bugfixes are commited
@@ -88,7 +88,7 @@ namespace PvPCommands
 
         private static void OnLeave(LeaveEventArgs e)
         {
-            if (TShock.Players[e.Who].IsLoggedIn && VSPlayers[TShock.Players[e.Who].UserID] != null)
+            if (TShock.Players[e.Who].IsLoggedIn && VSPlayers.ContainsKey(TShock.Players[e.Who].UserID))
             {
                 try
                 {
