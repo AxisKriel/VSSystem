@@ -34,7 +34,7 @@ namespace PvPCommands
         /// Gets of sets timers related to the user's state. Key is Type, value is Count.
         /// </summary>
         //public List<int> State { get; set; }
-        public Dictionary<int, int> State { get; set; }
+        public Dictionary<States, int> State { get; set; }
 
         // Can add either by Player Index or Name. If name, make sure it matches exactly 1 player
         public VSPlayer(int index)
@@ -45,7 +45,7 @@ namespace PvPCommands
             this.VSCommands = new List<VSCommand>();
             this.Cooldowns = new Dictionary<string, int>();
             //this.State = new List<int>();
-            this.State = new Dictionary<int, int>();
+            this.State = new Dictionary<States, int>();
         }
         public VSPlayer(string name)
         {
@@ -55,7 +55,7 @@ namespace PvPCommands
             this.VSCommands = new List<VSCommand>();
             this.Cooldowns = new Dictionary<string, int>();
             //this.State = new List<int>();
-            this.State = new Dictionary<int, int>();
+            this.State = new Dictionary<States, int>();
         }
 
         public void DamagePlayer(double damage)
@@ -79,18 +79,18 @@ namespace PvPCommands
             {
                 if (cmd.Offensive)
                 {
-                    if (State.Keys.Contains(3))
+                    if (State.ContainsKey(States.BARRIER))
                     {
                         Message msg = new Message("Barrier has been disposed!", false, "", false, "", Color.Indigo);
-                        RemoveState(3);
+                        RemoveState(States.BARRIER);
                         TSPlayer.SendMessage(msg.Text, msg.Color);
                         return;
                     }
-                    else if (State.Keys.Contains(2))
+                    else if (State.ContainsKey(States.SHIELD))
                     {
                         damage *= 0.8;
                     }
-                    else if (State.Keys.Contains(4))
+                    else if (State.ContainsKey(States.LOCUS))
                     {
                         damage *= 0.5;
                     }
@@ -108,27 +108,27 @@ namespace PvPCommands
             {
                 if (cmd.Offensive)
                 {
-                    if (State.Keys.Contains(3))
+                    if (State.ContainsKey(States.BARRIER))
                     {
                         Message msg = new Message("Barrier has been disposed!", false, "", false, "", Color.Indigo);
-                        RemoveState(3);
+                        RemoveState(States.BARRIER);
                         TSPlayer.SendInfoMessage(msg.Text, msg.Color);
                         return;
                     }
-                    if (State.Keys.Contains(2))
+                    if (State.ContainsKey(States.SHIELD))
                     {
                         damage *= 0.8;
                     }
-                    if (State.Keys.Contains(4))
+                    if (State.ContainsKey(States.LOCUS))
                     {
                         damage *= 0.5;
                     }
                 }
-                if (user.State.Keys.Contains(1))
+                if (user.State.ContainsKey(States.BOOST))
                 {
                     damage *= 1.2;
                 }
-                if (user.State.Keys.Contains(4))
+                if (user.State.ContainsKey(States.LOCUS))
                 {
                     damage *= 1.5;
                 }
@@ -136,36 +136,33 @@ namespace PvPCommands
             }
         }
 
-        public void SetState(int state = 0, int count = 0)
+        public void SetState(States state = States.NULL, int count = 0)
         {
-            if (state == 0)
+            if (state.Equals(States.NULL))
             {
-                for (int i = 0; i < State.Keys.Count; i++)
-                {
-                    State.Remove(i);
-                }
+                State.Clear();
             }
             else
             {
                 State.Add(state, count);
             }
         }
-        public void RemoveState(int state)
+        public void RemoveState(States state)
         {
             if (State.Keys.Contains(state))
             {
                 State.Remove(state);
             }
         }
-        public string StateName(int state)
+        public string StateName(States state)
         {
-            if (state == 1)
+            if (state.Equals(States.BOOST))
                 return "Boost";
-            else if (state == 2)
+            else if (state.Equals(States.SHIELD))
                 return "Shield";
-            else if (state == 3)
+            else if (state.Equals(States.BARRIER))
                 return "Barrier";
-            else if (state == 4)
+            else if (state.Equals(States.LOCUS))
                 return "Locus";
             else
                 return "None";
@@ -380,27 +377,42 @@ namespace PvPCommands
     }
 
     /// <summary>
+    /// VSPlayer states used to affect damage properties
+    /// </summary>
+    public enum States
+    {
+        NULL,
+        BOOST,
+        SHIELD,
+        BARRIER,
+        LOCUS,
+        NONE = 100
+    }
+    /// <summary>
     /// Provides additional effects such as buffs and states
     /// </summary>
     public class Effect
     {
-        public string Type { get; set; }
+        public EffectTypes Type { get; set; }
         public int Parameter { get; set; }
         public int Parameter2 { get; set; }
         public int Who { get; set; }
+        public States SetState { get; set; }
 
-        public Effect(string type, int parameter, int parameter2 = 0, int Who = 1)
+        public Effect(EffectTypes type, int parameter, int parameter2 = 0, int Who = 1, States setstate = States.NONE)
         {
             this.Type = type;
             this.Parameter = parameter;
             this.Parameter2 = parameter2;
             this.Who = Who;
+            this.SetState = setstate;
         }
 
         // Event for the effect. Parameter function vary based on the type. Who is 0 (User) and 1 (target)
-        public static void Event(VSPlayer User, TSPlayer Target, string type, int Parameter, int Parameter2 = 0, int Who = 1)
+        public static void Event(VSPlayer User, TSPlayer Target, EffectTypes type, int Parameter, int Parameter2 = 0,
+            int Who = 1, States setstate = States.NONE)
         {
-            if (type.ToLower() == "buff")
+            if (type.Equals(EffectTypes.BUFF))
             {
                 try
                 {
@@ -414,21 +426,14 @@ namespace PvPCommands
                     Log.ConsoleError("[VSSystem] A command has returned an error at Effect parameter: Invalid buff ID");
                 }
             }
-            if (type.ToLower() == "chill")
-            {
-                if (Who == 0)
-                    User.TSPlayer.SetBuff(46, Parameter * 60, true);
-                else
-                    Target.SetBuff(46, Parameter * 60, true);
-            }
-            else if (type.ToLower() == "healself")
+            else if (type.Equals(EffectTypes.HEALSELF))
             {
                 if (Who == 0)
                     User.TSPlayer.Heal(Parameter);
                 else
                     Target.Heal(Parameter);
             }
-            else if (type.ToLower() == "tickle")
+            else if (type.Equals(EffectTypes.TICKLE))
             {
                 if (Who == 0)
                 {
@@ -451,13 +456,23 @@ namespace PvPCommands
                         Target.SetBuff(47, Parameter * 60, false);
                 }
             }
-            else if (type.ToLower() == "state")
+            else if (type.Equals(EffectTypes.STATE) && setstate != States.NONE)
             {
                 if (Who == 0)
-                    User.SetState(Parameter, Parameter2);
+                    User.SetState(setstate, Parameter);
                 else
-                    VSSystem.VSPlayers[Target.UserID].SetState(Parameter, Parameter2);
+                    VSSystem.VSPlayers[Target.UserID].SetState(setstate, Parameter);
             }
         }
+    }
+    /// <summary>
+    /// Enumeration for effect types
+    /// </summary>
+    public enum EffectTypes
+    {
+        BUFF,
+        HEALSELF,
+        TICKLE,
+        STATE
     }
 }

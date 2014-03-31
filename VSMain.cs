@@ -17,7 +17,7 @@ namespace PvPCommands
         #region PluginInfo
         public VSSystem(Main game) : base(game) { }
 
-        Version version = new Version(1, 2, 3);         // Versioning Format: MAJOR.MINOR.BUGFIX
+        Version version = new Version(1, 2, 4);         // Versioning Format: MAJOR.MINOR.BUGFIX
         public override Version Version                 // MAJOR is not backwards-compatible
         {                                               // MINOR is backwards-compatible, used when new content is added
             get { return version; }                     // BUGFIX is backwards-compatible, used when only bugfixes are commited
@@ -192,7 +192,7 @@ namespace PvPCommands
                 Permission = "tickle",
                 BypassPvp = true,
                 Offensive = false,
-                Effect = new List<Effect>() { new Effect("tickle", 10) }
+                Effect = new List<Effect>() { new Effect(EffectTypes.TICKLE, 10) }
             };
             Tickle.MsgAll = new Message("", false, "", true, " is under a freezing attack of tickles!", new Color(243, 112, 234));
             Tickle.Timer.Interval = 10000;
@@ -247,7 +247,7 @@ namespace PvPCommands
                     new Message("Casts an ice glyph on target player, chilling them for 7 seconds.", Color.Cyan),
                     new Message("Usage: /chill <player>", Color.Yellow)
                 },
-                Effect = new List<Effect>() { new Effect("buff", 46, 7) },
+                Effect = new List<Effect>() { new Effect(EffectTypes.BUFF, 46, 7) },
                 MsgPlayer = new Message("You have been chilled!", false, "", false, "", Color.Cyan)
             };
             PVPCommands.Add(Chill);
@@ -345,7 +345,7 @@ namespace PvPCommands
                 Offensive = false,
                 UseSelf = 1,
                 MsgSelf = new Message("Boost activated! Damage dealt to players by your PvP Commands will be increased by 20%!", false, "", false, "", Color.OrangeRed),
-                Effect = new List<Effect>() { new Effect("state", 1, 60) },
+                Effect = new List<Effect>() { new Effect(EffectTypes.STATE, 60, setstate: States.BOOST) },
                 Cooldown = VSConfig.config.BoostCooldown
             };
             PVPCommands.Add(Boost);
@@ -364,7 +364,7 @@ namespace PvPCommands
                 Offensive = false,
                 UseSelf = 1,
                 MsgSelf = new Message("Virtual Shield activated! Damage taken by PvP Commands will be reduced by 20%!", false, "", false, "", Color.DimGray),
-                Effect = new List<Effect>() { new Effect("state", 2, 60) },
+                Effect = new List<Effect>() { new Effect(EffectTypes.STATE, 60, setstate: States.SHIELD) },
                 Cooldown = VSConfig.config.ShieldCooldown
             };
             PVPCommands.Add(Shield);
@@ -384,7 +384,7 @@ namespace PvPCommands
                 Offensive = false,
                 UseSelf = 1,
                 MsgSelf = new Message("Barrier lifted! The next PvP command used against you will be ignored!", false, "", false, "", Color.DimGray),
-                Effect = new List<Effect>() { new Effect("state", 3, 60) },
+                Effect = new List<Effect>() { new Effect(EffectTypes.STATE, 60, setstate: States.BARRIER) },
                 Cooldown = VSConfig.config.BarrierCooldown
             };
             PVPCommands.Add(Barrier);
@@ -406,8 +406,8 @@ namespace PvPCommands
                 UseSelf = 1,
                 Effect = new List<Effect>()
                     {
-                        new Effect("state", 4, 10),
-                        new Effect("chill", 10, Who: 0)
+                        new Effect(EffectTypes.STATE, 10, 0, 0, States.LOCUS),
+                        new Effect(EffectTypes.BUFF, 46, 10, 0)
                     },
                 MsgAll = new Message("", true, " activated Locus of Power!", false, "", Color.Navy),
                 Cooldown = VSConfig.config.LocusCooldown
@@ -435,7 +435,7 @@ namespace PvPCommands
                     {
                         VSPlayers[cmd.Target.UserID].DamagePlayer(30, cmd, cmd.User);
                     }
-                    foreach (int type in player.State.Keys)
+                    foreach (States type in player.State.Keys)
                     {
                         player.State[type]--;
                         if (player.State[type] < 1)
@@ -632,7 +632,7 @@ namespace PvPCommands
             {
                 foreach (Effect eff in command.Effect)
                 {
-                    Effect.Event(user, target, eff.Type, eff.Parameter, eff.Parameter2);
+                    Effect.Event(user, target, eff.Type, eff.Parameter, eff.Parameter2, eff.Who, eff.SetState);
                 }
             }
 
